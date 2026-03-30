@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数独</title>
+<style>
+body { font-family: sans-serif; text-align: center; background: #f5f5f5; margin: 0; }
+h1 { margin-top: 20px; font-size: 2.5rem; }
+.buttons { margin: 15px 0; }
+button { padding: 10px 15px; margin: 5px; font-size: 1rem; border-radius: 8px; border: none; background: #4CAF50; color: white; cursor: pointer; }
+button:hover { background: #45a049; }
+table { border-collapse: collapse; margin: 20px auto; }
+td { width: 40px; height: 40px; text-align: center; border: 1px solid #555; font-size: 1.2rem; background: white; }
+tr:nth-child(3n) td { border-bottom: 2px solid black; }
+td:nth-child(3n) { border-right: 2px solid black; }
+</style>
+</head>
+
+
+<body>
+<h1>数独</h1>
+
+
+<div class="buttons">
+<button onclick="generate(30)">簡単</button>
+<button onclick="generate(45)">普通</button>
+<button onclick="generate(55)">難しい</button>
+</div>
+
+
+<div id="board"></div>
+
+
+<div class="buttons">
+<button onclick="showAnswer()">解答表示</button>
+</div>
+
+
+<script>
+let solution = [];
+
+
+function valid(board, r, c, n) {
+  for (let i = 0; i < 9; i++) {
+    if (board[r][i] === n || board[i][c] === n) return false;
+  }
+  let br = Math.floor(r / 3) * 3;
+  let bc = Math.floor(c / 3) * 3;
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++)
+      if (board[br + i][bc + j] === n) return false;
+  return true;
+}
+
+
+function solve(board) {
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      if (board[r][c] === 0) {
+        let nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+        for (let n of nums) {
+          if (valid(board, r, c, n)) {
+            board[r][c] = n;
+            if (solve(board)) return true;
+            board[r][c] = 0;
+          }
+        }
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
+function countSolutions(board) {
+  let count = 0;
+
+
+  function dfs() {
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (board[r][c] === 0) {
+          for (let n = 1; n <= 9; n++) {
+            if (valid(board, r, c, n)) {
+              board[r][c] = n;
+              dfs();
+              board[r][c] = 0;
+            }
+          }
+          return;
+        }
+      }
+    }
+    count++;
+  }
+
+
+  dfs();
+  return count;
+}
+
+
+function generateFull() {
+  let board = Array.from({length:9}, () => Array(9).fill(0));
+  solve(board);
+  return board;
+}
+
+
+function copyBoard(b) {
+  return b.map(row => row.slice());
+}
+
+
+function makePuzzle(full) {
+  let puzzle = copyBoard(full);
+  let cells = [];
+
+
+  for (let r = 0; r < 9; r++)
+    for (let c = 0; c < 9; c++)
+      cells.push([r,c]);
+
+
+  cells.sort(() => Math.random() - 0.5);
+
+
+  for (let [r,c] of cells) {
+    let backup = puzzle[r][c];
+    puzzle[r][c] = 0;
+
+
+    let test = copyBoard(puzzle);
+    if (countSolutions(test) !== 1) {
+      puzzle[r][c] = backup;
+    }
+  }
+  return puzzle;
+}
+
+
+function draw(board) {
+  let html = "<table>";
+  for (let r = 0; r < 9; r++) {
+    html += "<tr>";
+    for (let c = 0; c < 9; c++) {
+      let val = board[r][c] === 0 ? "" : board[r][c];
+      html += "<td>" + val + "</td>";
+    }
+    html += "</tr>";
+  }
+  html += "</table>";
+  document.getElementById("board").innerHTML = html;
+}
+
+
+function generate(empties) {
+  solution = generateFull();
+  let puzzle = makePuzzle(solution);
+  draw(puzzle);
+}
+
+
+function showAnswer() {
+  if (solution.length) draw(solution);
+}
+</script>
+</body>
+</html>
