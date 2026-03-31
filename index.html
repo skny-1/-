@@ -1,65 +1,57 @@
-﻿<!DOCTYPE html>
-<html lang="ja">
+<!DOCTYPE html><html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数独</title>
-<style>
-body { font-family: sans-serif; text-align: center; background: #f5f5f5; margin: 0; }
-h1 { margin-top: 20px; font-size: 2.5rem; }
-.buttons { margin: 15px 0; }
-button { padding: 10px 15px; margin: 5px; font-size: 1rem; border-radius: 8px; border: none; background: #4CAF50; color: white; cursor: pointer; }
-button:hover { background: #45a049; }
-table { border-collapse: collapse; margin: 20px auto; }
-td { width: 40px; height: 40px; text-align: center; border: 1px solid #555; font-size: 1.2rem; background: white; }
-tr:nth-child(3n) td { border-bottom: 2px solid black; }
-td:nth-child(3n) { border-right: 2px solid black; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数独</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f5f5f5; margin: 0; }
+    h1 { margin-top: 20px; font-size: 2.5rem; }
+    .buttons { margin: 15px 0; }
+    button { padding: 10px 15px; margin: 5px; font-size: 1rem; border-radius: 8px; border: none; background: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background: #45a049; }
+    table { border-collapse: collapse; margin: 20px auto; }
+    td { width: 40px; height: 40px; text-align: center; border: 1px solid #555; font-size: 1.2rem; background: white; }
+    tr:nth-child(3n) td { border-bottom: 2px solid black; }
+    td:nth-child(3n) { border-right: 2px solid black; }
+    .cell-input { width: 100%; height: 100%; border: none; text-align: center; font-size: 1.2rem; background: transparent; }
+    .selected { outline: 2px solid #2196F3; }
+    #numpad { margin-top: 10px; }
+    #numpad button { width: 40px; height: 40px; margin: 3px; font-size: 1rem; }
+  </style>
 </head>
-
-
-<body>
-<h1>数独</h1>
-
-
-<div class="buttons">
-<button onclick="generate(30)">簡単</button>
-<button onclick="generate(45)">普通</button>
-<button onclick="generate(55)">難しい</button>
-</div>
-
-
-<div id="board"></div>
-
-
-<div class="buttons">
-<button onclick="showAnswer()">解答表示</button>
-</div>
-
-
-<script>
+<body><h1>数独</h1><div class="buttons">
+  <button onclick="generate('easy')">簡単</button>
+  <button onclick="generate('normal')">普通</button>
+  <button onclick="generate('hard')">難しい</button>
+</div><div id="board"></div><div id="numpad"></div><div class="buttons">
+  <button onclick="checkAnswer()">解答チェック</button>
+  <button onclick="showAnswer()">解答表示</button>
+</div><script>
 let solution = [];
-
+let currentPuzzle = [];
+let selectedInput = null;
 
 function valid(board, r, c, n) {
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 9; i++)
     if (board[r][i] === n || board[i][c] === n) return false;
-  }
+
   let br = Math.floor(r / 3) * 3;
   let bc = Math.floor(c / 3) * 3;
+
   for (let i = 0; i < 3; i++)
     for (let j = 0; j < 3; j++)
       if (board[br + i][bc + j] === n) return false;
+
   return true;
 }
 
+function copyBoard(b) { return b.map(row => row.slice()); }
 
 function solve(board) {
   for (let r = 0; r < 9; r++) {
     for (let c = 0; c < 9; c++) {
       if (board[r][c] === 0) {
-        let nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
-        for (let n of nums) {
+        for (let n = 1; n <= 9; n++) {
           if (valid(board, r, c, n)) {
             board[r][c] = n;
             if (solve(board)) return true;
@@ -73,11 +65,8 @@ function solve(board) {
   return true;
 }
 
-
 function countSolutions(board) {
   let count = 0;
-
-
   function dfs() {
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
@@ -95,43 +84,28 @@ function countSolutions(board) {
     }
     count++;
   }
-
-
   dfs();
   return count;
 }
 
-
 function generateFull() {
-  let board = Array.from({length:9}, () => Array(9).fill(0));
+  let board = Array.from({ length: 9 }, () => Array(9).fill(0));
   solve(board);
   return board;
 }
 
-
-function copyBoard(b) {
-  return b.map(row => row.slice());
-}
-
-
 function makePuzzle(full, empties) {
   let puzzle = copyBoard(full);
   let cells = [];
-
   for (let r = 0; r < 9; r++)
     for (let c = 0; c < 9; c++)
       cells.push([r, c]);
-
   cells.sort(() => Math.random() - 0.5);
-
   let removed = 0;
-
   for (let [r, c] of cells) {
     if (removed >= empties) break;
-
     let backup = puzzle[r][c];
     puzzle[r][c] = 0;
-
     let test = copyBoard(puzzle);
     if (countSolutions(test) !== 1) {
       puzzle[r][c] = backup;
@@ -139,35 +113,100 @@ function makePuzzle(full, empties) {
       removed++;
     }
   }
-
   return puzzle;
 }
 
-function draw(board) {
-  let html = "<table>";
-  for (let r = 0; r < 9; r++) {
-    html += "<tr>";
-    for (let c = 0; c < 9; c++) {
-      let val = board[r][c] === 0 ? "" : board[r][c];
-      html += "<td>" + val + "</td>";
+function canSolveBySingles(board) {
+  board = copyBoard(board);
+  while (true) {
+    let progress = false;
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (board[r][c] === 0) {
+          let candidates = [];
+          for (let n = 1; n <= 9; n++)
+            if (valid(board, r, c, n)) candidates.push(n);
+          if (candidates.length === 1) {
+            board[r][c] = candidates[0];
+            progress = true;
+          }
+        }
+      }
     }
-    html += "</tr>";
+    if (!progress) break;
   }
-  html += "</table>";
-  document.getElementById("board").innerHTML = html;
+  return board.flat().every(x => x !== 0);
 }
 
-
-function generate(empties) {
-  solution = generateFull();
-  let puzzle = makePuzzle(solution);
-  draw(puzzle);
+function generate(level) {
+  let empties = level === 'easy' ? 30 : level === 'normal' ? 40 : 50;
+  while (true) {
+    solution = generateFull();
+    let puzzle = makePuzzle(solution, empties);
+    if (level === 'easy' && !canSolveBySingles(puzzle)) continue;
+    currentPuzzle = puzzle;
+    drawPuzzle(puzzle);
+    drawNumpad();
+    return;
+  }
 }
 
+function drawPuzzle(board) {
+  let html = '<table>';
+  for (let r = 0; r < 9; r++) {
+    html += '<tr>';
+    for (let c = 0; c < 9; c++) {
+      if (board[r][c] === 0) {
+        html += `<td><input class='cell-input' readonly data-r='${r}' data-c='${c}' onclick='selectCell(this)'></td>`;
+      } else {
+        html += `<td>${board[r][c]}</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</table>';
+  document.getElementById('board').innerHTML = html;
+}
+
+function drawNumpad() {
+  let html = '';
+  for (let i = 1; i <= 9; i++) {
+    html += `<button onclick='inputNumber(${i})'>${i}</button>`;
+  }
+  html += `<button onclick='inputNumber(0)'>消</button>`;
+  document.getElementById('numpad').innerHTML = html;
+}
+
+function selectCell(input) {
+  if (selectedInput) selectedInput.classList.remove('selected');
+  selectedInput = input;
+  input.classList.add('selected');
+}
+
+function inputNumber(num) {
+  if (!selectedInput) return;
+  selectedInput.value = num === 0 ? '' : num;
+}
 
 function showAnswer() {
-  if (solution.length) draw(solution);
+  drawPuzzle(solution);
 }
-</script>
-</body>
+
+function checkAnswer() {
+  let inputs = document.querySelectorAll('input');
+  let correct = true;
+  inputs.forEach(input => {
+    let r = input.dataset.r;
+    let c = input.dataset.c;
+    if (parseInt(input.value) !== solution[r][c]) {
+      input.style.background = '#ffcccc';
+      correct = false;
+    } else {
+      input.style.background = '#ccffcc';
+    }
+  });
+  if (correct) alert('正解です！');
+  else alert('間違いがあります');
+}
+</script></body>
 </html>
